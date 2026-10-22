@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7faf7" />
+  <meta name="description" content="DevTabs keeps your browser tabs in sync with your VS Code project. Switch folders, switch workspaces." />
+  <title>DevTabs — Your browser follows your project</title>
+  <style>
+    :root {
+      --bg: #f7faf7;
+      --surface: #ffffff;
+      --ink: #15251b;
+      --muted: #647368;
+      --green: #1e9e55;
+      --green-dark: #147541;
+      --green-soft: #e8f7ed;
+      --line: #dfe9e1;
+      --shadow: 0 24px 70px rgba(19, 53, 31, .10);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 82% 9%, rgba(30,158,85,.09), transparent 29rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    .wrap { width: min(1120px, calc(100% - 44px)); margin: 0 auto; }
+    .nav {
+      height: 82px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(223,233,225,.8);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; letter-spacing: -.7px; }
+    .brand-mark {
+      width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px;
+      color: #fff; background: var(--green); box-shadow: 0 5px 14px rgba(30,158,85,.23);
+    }
+    .brand-mark svg { width: 21px; height: 21px; }
+    .nav-right { display: flex; align-items: center; gap: 18px; }
+    .nav-note { font-size: 13px; color: var(--muted); }
+    .nav-cta { font-size: 13px; font-weight: 700; padding: 11px 16px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); transition: .2s ease; }
+    .nav-cta:hover { border-color: #9ccfab; transform: translateY(-1px); }
+    .hero { display: grid; grid-template-columns: 1fr .97fr; gap: 56px; align-items: center; padding: 78px 0 72px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid #cdebd5; border-radius: 999px; background: rgba(232,247,237,.8); color: var(--green-dark); font-size: 12px; font-weight: 750; letter-spacing: .03em; }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px rgba(30,158,85,.11); }
+    h1 { max-width: 620px; margin: 20px 0 18px; font-size: clamp(42px, 5.5vw, 66px); line-height: 1.04; letter-spacing: -.065em; font-weight: 820; }
+    h1 .accent { color: var(--green); }
+    .hero-copy { max-width: 525px; color: var(--muted); font-size: 17px; line-height: 1.75; margin: 0; }
+    .benefits { display: grid; gap: 13px; padding: 0; margin: 27px 0 0; list-style: none; }
+    .benefits li { display: flex; gap: 11px; align-items: flex-start; color: #34483a; font-size: 14px; line-height: 1.55; }
+    .check { flex: 0 0 21px; width: 21px; height: 21px; display: grid; place-items: center; margin-top: 1px; color: var(--green-dark); background: var(--green-soft); border-radius: 50%; }
+    .check svg { width: 12px; height: 12px; }
+    .hero-actions { display: flex; align-items: center; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
+    .btn { display: inline-flex; justify-content: center; align-items: center; gap: 9px; min-height: 48px; padding: 0 20px; border: 0; border-radius: 13px; background: var(--green); color: white; font-size: 14px; font-weight: 750; box-shadow: 0 9px 22px rgba(30,158,85,.2); cursor: pointer; transition: transform .2s, background .2s, box-shadow .2s; }
+    .btn:hover { background: var(--green-dark); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(30,158,85,.26); }
+    .btn svg { width: 16px; height: 16px; }
+    .microcopy { color: #819086; font-size: 12px; }
+
+    .demo-shell { position: relative; padding: 13px; border: 1px solid rgba(212,226,215,.95); border-radius: 25px; background: rgba(255,255,255,.7); box-shadow: var(--shadow); transform: rotate(.6deg); }
+    .demo-shell::before { content: ""; position: absolute; z-index: -1; inset: 22px -17px -18px 28px; border-radius: 28px; background: rgba(30,158,85,.09); filter: blur(1px); }
+    .browser-window { overflow: hidden; border: 1px solid #d9e3dc; border-radius: 15px; background: #fff; }
+    .browser-top { height: 43px; display: flex; align-items: center; gap: 6px; padding: 0 13px; border-bottom: 1px solid #e9efea; background: #f9fbf9; }
+    .traffic { width: 8px; height: 8px; border-radius: 50%; background: #d6dfd8; }
+    .address { height: 23px; display: flex; align-items: center; gap: 7px; flex: 1; max-width: 245px; margin: 0 auto; padding: 0 10px; border: 1px solid #e8eee9; border-radius: 7px; color: #8b988e; background: white; font-size: 9px; }
+    .address svg { width: 10px; height: 10px; }
+    .browser-tabs { display: flex; align-items: end; gap: 4px; padding: 10px 11px 0; background: #f2f6f3; }
+    .tab { min-width: 0; display: flex; align-items: center; gap: 6px; padding: 9px 10px; border: 1px solid #e0e9e2; border-bottom: 0; border-radius: 8px 8px 0 0; background: #e9efeb; color: #7b897f; font-size: 10px; white-space: nowrap; }
+    .tab.active { background: #fff; color: #294431; }
+    .favicon { width: 7px; height: 7px; border-radius: 2px; background: #e4a64d; }
+    .favicon.green { background: #28a65e; }
+    .favicon.blue { background: #5c95df; }
+    .browser-content { min-height: 215px; padding: 20px 20px 22px; background: #fff; }
+    .content-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid #edf1ee; }
+    .project-label { display: flex; flex-direction: column; gap: 4px; }
+    .project-label strong { font-size: 12px; letter-spacing: -.2px; }
+    .project-label span { font-size: 9px; color: #8a978d; }
+    .sync-pill { display: flex; align-items: center; gap: 5px; padding: 6px 8px; color: #137642; border-radius: 7px; background: #eaf8ee; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .sync-pill i { width: 5px; height: 5px; background: #21a45a; border-radius: 50%; }
+    .tab-map { display: grid; grid-template-columns: 1fr 28px 1fr; align-items: center; gap: 8px; margin-top: 20px; }
+    .map-card { padding: 12px 11px; border: 1px solid #e4ece5; border-radius: 10px; background: #fbfdfb; }
+    .map-card.active { border-color: #a5d9b5; background: #f5fcf7; }
+    .map-title { color: #859187; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .map-name { margin-top: 7px; font-size: 11px; font-weight: 750; }
+    .map-file { margin-top: 5px; color: #8b998e; font-size: 9px; }
+    .sync-arrow { display: grid; place-items: center; color: var(--green); }
+    .sync-arrow svg { width: 19px; height: 19px; }
+    .code-lines { display: grid; gap: 7px; margin-top: 17px; }
+    .code-line { height: 5px; border-radius: 4px; background: #eff3ef; }
+    .code-line:nth-child(1) { width: 72%; }
+    .code-line:nth-child(2) { width: 89%; }
+    .code-line:nth-child(3) { width: 55%; }
+    .code-line:nth-child(4) { width: 65%; }
+    .demo-caption { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 13px 3px 1px; color: #87948a; font-size: 10px; }
+    .demo-caption b { color: #536958; font-weight: 700; }
+    .caption-live { display: inline-flex; align-items: center; gap: 6px; }
+    .caption-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #25a75d; }
+
+    .offer { padding: 0 0 86px; scroll-margin-top: 30px; }
+    .offer-card { position: relative; overflow: hidden; display: grid; grid-template-columns: 1.1fr .9fr; gap: 36px; align-items: center; padding: 38px 40px; border-radius: var(--radius); background: #14291c; color: white; box-shadow: 0 18px 45px rgba(15,44,25,.15); }
+    .offer-card::after { content: ""; position: absolute; width: 360px; height: 360px; right: 22%; top: -255px; border: 1px solid rgba(111,202,140,.22); border-radius: 50%; box-shadow: 0 0 0 35px rgba(111,202,140,.035), 0 0 0 70px rgba(111,202,140,.025); pointer-events: none; }
+    .offer-copy, .signup { position: relative; z-index: 1; }
+    .offer-label { display: inline-flex; align-items: center; gap: 7px; color: #9ee5b4; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 800; }
+    .offer-label svg { width: 14px; height: 14px; }
+    .offer h2 { margin: 13px 0 9px; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.12; letter-spacing: -.045em; }
+    .offer h2 .highlight { color: #80e59e; }
+    .offer-copy p { margin: 0; max-width: 420px; color: #b7c9bc; line-height: 1.65; font-size: 14px; }
+    .price-note { margin-top: 16px; color: #96ab9b; font-size: 12px; }
+    .price-note strong { color: #fff; }
+    .signup { padding: 19px; border: 1px solid rgba(255,255,255,.13); border-radius: 16px; background: rgba(255,255,255,.055); backdrop-filter: blur(6px); }
+    .signup label { display: block; margin: 0 0 8px; font-size: 12px; color: #e3eee5; font-weight: 700; }
+    .input-row { display: flex; gap: 8px; }
+    .signup input[type="email"] { width: 100%; min-width: 0; height: 47px; padding: 0 13px; border: 1px solid rgba(221,240,226,.2); border-radius: 10px; outline: none; color: #f6fff8; background: rgba(2,17,8,.27); font-size: 13px; transition: border .2s, box-shadow .2s; }
+    .signup input[type="email"]::placeholder { color: #91a697; }
+    .signup input[type="email"]:focus { border-color: #77d993; box-shadow: 0 0 0 3px rgba(119,217,147,.14); }
+    .signup .btn { flex: 0 0 auto; min-height: 47px; padding: 0 15px; border-radius: 10px; box-shadow: none; font-size: 12px; }
+    .form-note { margin: 10px 1px 0; min-height: 15px; color: #93aa99; font-size: 10px; line-height: 1.5; }
+    .form-note.success { color: #a6f4ba; }
+    .form-note.error { color: #ffb8a9; }
+    .steps { padding: 0 0 90px; }
+    .section-heading { max-width: 590px; margin: 0 auto 38px; text-align: center; }
+    .section-kicker { color: var(--green-dark); font-size: 11px; text-transform: uppercase; letter-spacing: .13em; font-weight: 800; }
+    .section-heading h2 { margin: 12px 0 10px; font-size: clamp(30px, 4vw, 42px); line-height: 1.12; letter-spacing: -.05em; }
+    .section-heading p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 17px; }
+    .step { padding: 25px 24px 26px; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.75); transition: transform .2s, border-color .2s, box-shadow .2s; }
+    .step:hover { transform: translateY(-4px); border-color: #b6ddc0; box-shadow: 0 15px 35px rgba(30,74,42,.06); }
+    .step-num { display: grid; place-items: center; width: 38px; height: 38px; color: var(--green-dark); border-radius: 12px; background: var(--green-soft); font-size: 12px; font-weight: 850; }
+    .step h3 { margin: 20px 0 9px; font-size: 16px; letter-spacing: -.025em; }
+    .step p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .footer { border-top: 1px solid var(--line); padding: 23px 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 18px; color: #849187; font-size: 11px; }
+    .footer-brand { display: flex; gap: 8px; align-items: center; color: #506356; font-size: 12px; font-weight: 800; }
+    .footer-brand .brand-mark { width: 24px; height: 24px; border-radius: 7px; box-shadow: none; }
+    .footer-brand .brand-mark svg { width: 15px; height: 15px; }
+    @media (max-width: 850px) {
+      .hero { grid-template-columns: 1fr; gap: 42px; padding: 58px 0 66px; }
+      .hero-copy { max-width: 640px; }
+      .demo-shell { width: min(100%, 600px); margin: 0 auto; transform: none; }
+      .offer-card { grid-template-columns: 1fr; gap: 24px; padding: 32px; }
+      .offer-copy p { max-width: 570px; }
+      .signup { max-width: none; }
+    }
+    @media (max-width: 600px) {
+      .wrap { width: min(100% - 30px, 1120px); }
+      .nav { height: 69px; }
+      .brand { font-size: 18px; }
+      .nav-note { display: none; }
+      .nav-cta { padding: 9px 12px; font-size: 12px; }
+      .hero { padding: 45px 0 56px; gap: 35px; }
+      h1 { font-size: clamp(39px, 11.6vw, 54px); margin-top: 17px; }
+      .hero-copy { font-size: 15px; line-height: 1.7; }
+      .benefits { margin-top: 23px; gap: 11px; }
+      .hero-actions { gap: 11px; margin-top: 25px; }
+      .btn { min-height: 46px; padding: 0 16px; }
+      .demo-shell { padding: 8px; border-radius: 19px; }
+      .browser-top { height: 36px; }
+      .tab { padding: 8px 7px; font-size: 8px; gap: 4px; }
+      .browser-content { min-height: 205px; padding: 16px 12px; }
+      .tab-map { grid-template-columns: 1fr 20px 1fr; gap: 5px; }
+      .map-card { padding: 10px 8px; }
+      .map-name { font-size: 10px; }
+      .demo-caption { font-size: 9px; }
+      .offer { padding-bottom: 67px; }
+      .offer-card { padding: 25px 19px; border-radius: 19px; }
+      .offer h2 { font-size: 31px; }
+      .offer-copy p { font-size: 13px; }
+      .signup { padding: 14px; }
+      .input-row { flex-direction: column; }
+      .signup .btn { width: 100%; }
+      .steps { padding-bottom: 66px; }
+      .section-heading { margin-bottom: 28px; }
+      .section-heading h2 { font-size: 32px; }
+      .step-grid { grid-template-columns: 1fr; gap: 11px; }
+      .step { padding: 20px; }
+      .step h3 { margin-top: 14px; }
+      .footer { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap nav">
+    <a class="brand" href="#top" aria-label="DevTabs home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.7"/><path d="m9 9-3 3 3 3m6-6 3 3-3 3m-2-8-2 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      DevTabs
+    </a>
+    <div class="nav-right">
+      <span class="nav-note">Your browser, in sync with your code.</span>
+      <a class="nav-cta" href="#early-access">Get early access <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="wrap hero" aria-labelledby="hero-title">
+      <div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span> A tiny tool for focused developers</span>
+        <h1 id="hero-title">Switch projects.<br />Your tabs <span class="accent">follow.</span></h1>
+        <p class="hero-copy">DevTabs connects your VS Code project folders to your Chrome tabs, so every project has the right browser context—without the constant tab juggling in.</p>
+        <ul class="benefits">
+          <li><span class="check"><svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.2 2.8 2.7 6.2-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>Switch folders, switch context.</strong> Jump to another project and its browser tabs come with it.</span></li>
+          <li><span class="check"><svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.2 2.8 2.7 6.2-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>Keep work separate.</strong> Stop mixing localhost apps, docs, dashboards, and research.</span></li>
+          <li><span class="check"><svg viewBox="0 0 16 16" fill="none"><path d="m3.5 8.2 2.8 2.7 6.2-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span><strong>Get back in the flow.</strong> Less tab hunting, fewer interruptions, more building.</span></li>
+        </ul>
+        <div class="hero-actions">
+          <a class="btn" href="#early-access">Claim a free spot <svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+          <span class="microcopy">No payment details required.</span>
+        </div>
+      </div>
+
+      <div>
+        <!-- DEMO GIF PLACEHOLDER: replace this browser mockup with <img src="devtabs-demo.gif" alt="DevTabs switching Chrome tabs when the VS Code project changes"> when your GIF is ready. -->
+        <div class="demo-shell" aria-label="Illustration of browser tabs switching with the selected project">
+          <div class="browser-window">
+            <div class="browser-top">
+              <span class="traffic"></span><span class="traffic"></span><span class="traffic"></span>
+              <div class="address"><svg viewBox="0 0 16 16" fill="none"><path d="M5 7V5a3 3 0 1 1 6 0v2m-7 0h8v6H4V7Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg> localhost:3000</div>
+            </div>
+            <div class="browser-tabs">
+              <div class="tab active"><span class="favicon green"></span> Storefront</div>
+              <div class="tab"><span class="favicon blue"></span> React docs</div>
+              <div class="tab"><span class="favicon"></span> Stripe</div>
+            </div>
+            <div class="browser-content">
+              <div class="content-top">
+                <div class="project-label"><strong>DevTabs is in sync</strong><span>Current VS Code workspace</span></div>
+                <span class="sync-pill"><i></i> Synced</span>
+              </div>
+              <div class="tab-map">
+                <div class="map-card active"><div class="map-title">VS Code folder</div><div class="map-name">▸ storefront/</div><div class="map-file">src · package.json</div></div>
+                <div class="sync-arrow"><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h13l-3-3m4 11H6l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div class="map-card active"><div class="map-title">Chrome group</div><div class="map-name">● Storefront</div><div class="map-file">App · Docs · Payments</div></div>
+              </div>
+              <div class="code-lines" aria-hidden="true"><span class="code-line"></span><span class="code-line"></span><span class="code-line"></span><span class="code-line"></span></div>
+            </div>
+          </div>
+          <div class="demo-caption"><b>One project at a time. No tab chaos.</b><span class="caption-live">Concept preview</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap offer" id="early-access" aria-labelledby="offer-title">
+      <div class="offer-card">
+        <div class="offer-copy">
+          <span class="offer-label"><svg viewBox="0 0 20 20" fill="none"><path d="m10 2 2.1 5.9L18 10l-5.9 2.1L10 18l-2.1-5.9L2 10l5.9-2.1L10 2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Founding user offer</span>
+          <h2 id="offer-title">First 200 users =<br /><span class="highlight">FREE FOREVER.</span></h2>
+          <p>Get in early, help shape DevTabs, and keep your spot for good. No card, no trial countdown, no surprise charge.</p>
+          <div class="price-note">After the first 200 spots: <strong>$4.99/month.</strong></div>
+        </div>
+        <form class="signup" id="signup-form" action="PASTE_GOOGLE_FORM_RESPONSE_URL_HERE" method="POST" target="google-form-frame">
+          <label for="email">Get on the early-access list</label>
+          <!-- Replace entry.YOUR_EMAIL_FIELD_ID with the email question's entry ID from your Google Form. -->
+          <div class="input-row">
+            <input id="email" type="email" name="entry.YOUR_EMAIL_FIELD_ID" placeholder="you@company.com" autocomplete="email" required />
+            <button class="btn" type="submit">Save my spot <span aria-hidden="true">→</span></button>
+          </div>
+          <p id="form-note" class="form-note">One email when access opens. No spam.</p>
+        </form>
+        <!-- A hidden target keeps the visitor on this page after Google Forms receives the submission. -->
+        <iframe name="google-form-frame" title="Google Forms submission" aria-hidden="true" tabindex="-1" style="display:none"></iframe>
+      </div>
+    </section>
+
+    <section class="wrap steps" aria-labelledby="steps-title">
+      <div class="section-heading">
+        <span class="section-kicker">Simple by design</span>
+        <h2 id="steps-title">How DevTabs works</h2>
+        <p>Set up your project once. Then let DevTabs handle the boring part whenever you switch what you're building.</p>
+      </div>
+      <div class="step-grid">
+        <article class="step">
+          <div class="step-num">01</div>
+          <h3>Connect your tools</h3>
+          <p>Install DevTabs for your VS Code and Chrome workflow, then pair the projects you work on.</p>
+        </article>
+        <article class="step">
+          <div class="step-num">02</div>
+          <h3>Match tabs to projects</h3>
+          <p>Choose the browser tabs that belong with each folder—your app, docs, staging site, and more.</p>
+        </article>
+        <article class="step">
+          <div class="step-num">03</div>
+          <h3>Switch and keep flowing</h3>
+          <p>Open a different project in VS Code and DevTabs brings up its matching browser setup automatically.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <div class="footer-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z" stroke="currentColor" stroke-width="1.7"/><path d="m9 9-3 3 3 3m6-6 3 3-3 3m-2-8-2 10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span> DevTabs</div>
+    <span>Built for fewer context switches. © <span id="year"></span> DevTabs</span>
+  </footer>
+
+  <script>
+    // Google Forms setup:
+    // 1) Set the form action to your Google Form's /formResponse URL.
+    // 2) Replace YOUR_EMAIL_FIELD_ID in the email input's name with its entry ID (e.g. entry.123456789).
+    // A public share URL by itself is not a submission endpoint.
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const signupForm = document.getElementById('signup-form');
+    const formNote = document.getElementById('form-note');
+    const formAction = signupForm.getAttribute('action');
+
+    signupForm.addEventListener('submit', function (event) {
+      const emailInput = document.getElementById('email');
+      if (!emailInput.checkValidity()) return;
+
+      if (!formAction || formAction === 'PASTE_GOOGLE_FORM_RESPONSE_URL_HERE' || !formAction.includes('formResponse')) {
+        event.preventDefault();
+        formNote.textContent = 'The signup form is designed. Add your Google Forms /formResponse URL and email entry ID to activate submissions.';
+        formNote.className = 'form-note error';
+        return;
+      }
+
+      if (emailInput.name.includes('YOUR_EMAIL_FIELD_ID')) {
+        event.preventDefault();
+        formNote.textContent = 'Add your Google Forms email entry ID (entry.xxxxx) before collecting signups.';
+        formNote.className = 'form-note error';
+        return;
+      }
+
+      formNote.textContent = 'Submitting your email…';
+      formNote.className = 'form-note';
+      // Google Forms does not provide a reliable cross-origin success callback for this hidden-iframe flow.
+      // The short confirmation below indicates the submission was sent, not independently verified by Google.
+      window.setTimeout(function () {
+        formNote.textContent = 'Thanks! Your email has been sent to the signup form.';
+        formNote.className = 'form-note success';
+        signupForm.reset();
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
